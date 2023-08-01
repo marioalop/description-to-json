@@ -1,0 +1,12 @@
+{
+    "rule_description_examples": [
+        "create a rule that reports when a bike crosses a line",
+        "create a rule that reports when a person is detected",
+        "create a rule that reports when a person and a skateboard are too close",
+        "create a rule that reports when a car catches fire",
+        "create a rule that reports when a vehicle o person stay for more than 5 minutes",
+        "create a rule that reports when a person is running",
+        "create a rule that reports when detect fire in a room",
+        "create a rule that reports when the number of parked cars reaches 5"
+    ]    
+}

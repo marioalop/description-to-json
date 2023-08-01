@@ -1,0 +1,188 @@
+Chat History:
+Input: create a rule that reports when a bike crosses a line
+Output:```
+{
+    "name": "Bike Line Crossing",
+    "scene_element_types": [
+        "line"
+    ],
+    "rule": {
+        "rule_type": "scene-rule",
+        "match_type": "vehicle-crossed-line",
+        "match_postprocessing": {
+            "operation": "split",
+            "args": {
+                "computed_properties": [
+                    "dwell_time",
+                    "class_name"
+                ]
+            }
+        },
+        "filtering_condition": {
+            "type": "and",
+            "params": [
+                {
+                    "type": "object_class",
+                    "params": {
+                        "operator": "==",
+                        "value": "bicycle"
+                    }
+                },
+                {
+                    "type": "new_events",
+                    "params": {
+                        "operator": "contains",
+                        "value": "crossed_in"
+                    }
+                }
+            ]
+        },
+        "aggregation_condition": {
+            "type": "count",
+            "params": {
+                "operator": ">",
+                "value": 0
+            }
+        },
+        "extra_info": {
+            "speed_conversion_factor": 2.5,
+            "device_profile": "Line Crossing Counter"
+        }
+    }
+}
+```
+Input: create a rule that reports when a person is detected
+Output:```
+{
+    "name": "Person Detected",
+    "scene_element_types": [
+        "zone"
+    ],
+    "rule": {
+        "rule_type": "scene-rule",
+        "match_type": "person-entered-zone",
+        "match_postprocessing": {
+            "operation": "split",
+            "args": {
+                "computed_properties": [
+                    "dwell_time",
+                    "class_name"
+                ]
+            }
+        },
+        "aggregation_condition": {
+            "params": {
+                "operator": ">",
+                "value": 0
+            },
+            "type": "count"
+        },
+        "filtering_condition": {
+            "type": "and",
+            "params": [
+                {
+                    "type": "object_class",
+                    "params": {
+                        "operator": "in",
+                        "value": [
+                            "person"
+                        ]
+                    }
+                },
+                {
+                    "type": "object_size",
+                    "params": {
+                        "operator": ">",
+                        "value": 0
+                    }
+                },
+                {
+                    "type": "object_size",
+                    "params": {
+                        "operator": "<",
+                        "value": 1
+                    }
+                },
+                {
+                    "type": "or",
+                    "params": [
+                        {
+                            "type": "new_events",
+                            "params": {
+                                "operator": "contains",
+                                "value": "appeared"
+                            }
+                        },
+                        {
+                            "type": "new_events",
+                            "params": {
+                                "operator": "contains",
+                                "value": "entered"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        "extra_info": {
+            "device_profile": "Zone Detection"
+        }
+    }
+}
+```
+Input: create a rule that reports when a person and a skateboard are too close
+Output:```
+{
+    "name": "Person Skateboard Proximity",
+    "scene_element_types": [
+        "zone"
+    ],
+    "rule": {
+        "rule_type": "two-moving-objects-rule",
+        "match_type": "object-proximity",
+        "match_postprocessing": {
+            "operation": "split",
+            "args": {
+                "computed_properties": [
+                    "dwell_time",
+                    "class_name"
+                ]
+            }
+        },
+        "filtering_condition": {
+            "type": "and",
+            "params": [
+                {
+                    "type": "object_class_pair",
+                    "params": {
+                        "operator": "in",
+                        "value": [
+                            [
+                                "person",
+                                "skateboard"
+                            ]
+                        ]
+                    }
+                },
+                {
+                    "type": "object_distance",
+                    "params": {
+                        "operator": "<=",
+                        "value": 1.5
+                    }
+                }
+            ]
+        },
+        "aggregation_condition": {
+            "params": {
+                "operator": ">",
+                "value": 0
+            },
+            "type": "count"
+        },
+        "extra_info": {
+            "device_profile": "Zone Detection"
+        }
+    }
+}
+```

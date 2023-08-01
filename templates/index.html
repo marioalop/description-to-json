@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rule Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .json-key {
+            color: #d6deeb;
+        }
+        .json-value {
+            color: #a2d9f9;
+        }
+        .json-string {
+            color: #7cda80;
+        }
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-white min-h-screen">
+    <header class="flex items-center justify-between py-6 px-8 bg-gray-900">
+        <img src="/static/logo.png" alt="Logo" class="h-8">
+        <h1 class="text-2xl">Rule Generator</h1>
+    </header>
+    <main class="p-8">
+        <input type="text" id="ruleInput" class="bg-gray-700 rounded px-4 py-2 w-full text-white" placeholder="Rule description">
+        
+        <div class="flex justify-between">
+            <button id="submitButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded inline-flex items-center mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+            <div id="loadingIcon" class="loader hidden ml-2"></div>
+            </button>
+            <span id="copyTooltip" class="text-green-500 hidden">Copied!</span>
+            <button id="copyButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
+                Copy Rule
+            </button>
+            
+        </div>
+        <pre id="responseArea" class="bg-gray-700 rounded p-4 mt-4 w-full" disabled></pre>
+        
+        
+    </main>
+    <script>
+        const ruleInput = document.querySelector('#ruleInput');
+        const submitButton = document.querySelector('#submitButton');
+        const responseArea = document.querySelector('#responseArea');
+        const copyButton = document.querySelector('#copyButton');
+        const copyTooltip = document.querySelector('#copyTooltip');
+        const loadingIcon = document.querySelector('#loadingIcon');
+
+        function formatJSON(json) {
+            let formatted = JSON.stringify(json, undefined, 4);
+            formatted = formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return formatted.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'key';
+                    } else {
+                        cls = 'string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'null';
+                }
+                return '<span class="json-' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function submitRule() {
+            const startTime = performance.now()
+            loadingIcon.classList.remove('hidden');
+            const ruleDescription = ruleInput.value;
+            fetch('/newrule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({description: ruleDescription}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingIcon.classList.add('hidden');
+                const formattedData = formatJSON(data);
+                responseArea.innerHTML = formattedData;
+
+                const endTime = performance.now(); // Registra el tiempo de finalización
+                const executionTime = endTime - startTime; // Calcula el tiempo de ejecución
+                
+                copyTooltip.innerText = 'Execution time: ' + Math.round(executionTime * 100) /100000 + ' secs';
+                copyTooltip.classList.remove('hidden');
+                
+
+            })
+            .catch((error) => {
+                loadingIcon.classList.add('hidden');
+                console.error('Error:', error);
+            });
+        }
+
+        copyButton.addEventListener('click', function() {
+            navigator.clipboard.writeText(responseArea.innerText).then(function() {
+                copyTooltip.innerText = 'Copied!';
+                copyTooltip.classList.remove('hidden');
+                setTimeout(function() {
+                    copyTooltip.classList.add('hidden');
+                }, 2000);
+            }, function(err) {
+                copyTooltip.innerText = 'Failed to copy text';
+                copyTooltip.classList.remove('hidden');
+                setTimeout(function() {
+                    copyTooltip.classList.add('hidden');
+                }, 2000);
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        submitButton.addEventListener('click', submitRule);
+        ruleInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                submitRule();
+            }
+        });
+    </script>
+</body>
+</html>
